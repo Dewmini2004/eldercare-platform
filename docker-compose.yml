@@ -1,0 +1,306 @@
+version: '3.9'
+
+services:
+  # ─── Databases ───────────────────────────────────────────
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: eldercare_postgres_auth
+    environment:
+      POSTGRES_DB: eldercare_auth
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_auth_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-homes:
+    image: postgres:16-alpine
+    container_name: eldercare_postgres_homes
+    environment:
+      POSTGRES_DB: eldercare_homes
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_homes_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres-nurses:
+    image: postgres:16-alpine
+    container_name: eldercare_postgres_nurses
+    environment:
+      POSTGRES_DB: eldercare_nurses
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_nurses_data:/var/lib/postgresql/data
+
+  postgres-bookings:
+    image: postgres:16-alpine
+    container_name: eldercare_postgres_bookings
+    environment:
+      POSTGRES_DB: eldercare_bookings
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5435:5432"
+    volumes:
+      - postgres_bookings_data:/var/lib/postgresql/data
+
+  postgres-alerts:
+    image: postgres:16-alpine
+    container_name: eldercare_postgres_alerts
+    environment:
+      POSTGRES_DB: eldercare_alerts
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5436:5432"
+    volumes:
+      - postgres_alerts_data:/var/lib/postgresql/data
+
+  # ─── Redis ───────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: eldercare_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  # ─── RabbitMQ ────────────────────────────────────────────
+  rabbitmq:
+    image: rabbitmq:3.13-management-alpine
+    container_name: eldercare_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: eldercare
+      RABBITMQ_DEFAULT_PASS: eldercare123
+    ports:
+      - "5672:5672"
+      - "15672:15672"   # Management UI
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+
+  # ─── Microservices ───────────────────────────────────────
+  api-gateway:
+    build:
+      context: ./services/api-gateway
+      dockerfile: Dockerfile
+    container_name: eldercare_api_gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - PORT=3000
+      - REDIS_URL=redis://redis:6379
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - HOME_SERVICE_URL=http://home-service:3002
+      - NURSE_SERVICE_URL=http://nurse-service:3003
+      - BOOKING_SERVICE_URL=http://booking-service:3004
+      - ALERT_SERVICE_URL=http://alert-service:3005
+      - PAYMENT_SERVICE_URL=http://payment-service:3006
+      - AI_SERVICE_URL=http://ai-service:3007
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3008
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: ./services/auth-service
+      dockerfile: Dockerfile
+    container_name: eldercare_auth
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-auth:5432/eldercare_auth
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET}
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://eldercare:eldercare123@rabbitmq:5672
+    depends_on:
+      postgres-auth:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  home-service:
+    build:
+      context: ./services/home-service
+      dockerfile: Dockerfile
+    container_name: eldercare_homes
+    ports:
+      - "3002:3002"
+    environment:
+      - NODE_ENV=development
+      - PORT=3002
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-homes:5432/eldercare_homes
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://eldercare:eldercare123@rabbitmq:5672
+      - GOOGLE_MAPS_API_KEY=${GOOGLE_MAPS_API_KEY}
+      - CLOUDINARY_URL=${CLOUDINARY_URL}
+    depends_on:
+      postgres-homes:
+        condition: service_healthy
+    restart: unless-stopped
+
+  nurse-service:
+    build:
+      context: ./services/nurse-service
+      dockerfile: Dockerfile
+    container_name: eldercare_nurses
+    ports:
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - PORT=3003
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-nurses:5432/eldercare_nurses
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://eldercare:eldercare123@rabbitmq:5672
+      - CLOUDINARY_URL=${CLOUDINARY_URL}
+      - SLNC_VERIFY_URL=https://www.slnc.lk/registered_nurses.php
+    depends_on:
+      postgres-nurses:
+        condition: service_healthy
+    restart: unless-stopped
+
+  booking-service:
+    build:
+      context: ./services/booking-service
+      dockerfile: Dockerfile
+    container_name: eldercare_bookings
+    ports:
+      - "3004:3004"
+    environment:
+      - NODE_ENV=development
+      - PORT=3004
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-bookings:5432/eldercare_bookings
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://eldercare:eldercare123@rabbitmq:5672
+    depends_on:
+      postgres-bookings:
+        condition: service_healthy
+    restart: unless-stopped
+
+  alert-service:
+    build:
+      context: ./services/alert-service
+      dockerfile: Dockerfile
+    container_name: eldercare_alerts
+    ports:
+      - "3005:3005"
+    environment:
+      - NODE_ENV=development
+      - PORT=3005
+      - DATABASE_URL=postgresql://postgres:postgres@postgres-alerts:5432/eldercare_alerts
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://eldercare:eldercare123@rabbitmq:5672
+      - AI_SERVICE_URL=http://ai-service:3007
+    depends_on:
+      postgres-alerts:
+        condition: service_healthy
+    restart: unless-stopped
+
+  payment-service:
+    build:
+      context: ./services/payment-service
+      dockerfile: Dockerfile
+    container_name: eldercare_payments
+    ports:
+      - "3006:3006"
+    environment:
+      - NODE_ENV=development
+      - PORT=3006
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://eldercare:eldercare123@rabbitmq:5672
+      - PAYHERE_MERCHANT_ID=${PAYHERE_MERCHANT_ID}
+      - PAYHERE_SECRET=${PAYHERE_SECRET}
+      - PAYHERE_MODE=sandbox
+    restart: unless-stopped
+
+  ai-service:
+    build:
+      context: ./services/ai-service
+      dockerfile: Dockerfile
+    container_name: eldercare_ai
+    ports:
+      - "3007:3007"
+    environment:
+      - NODE_ENV=development
+      - PORT=3007
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - GROQ_MODEL=llama3-70b-8192
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://eldercare:eldercare123@rabbitmq:5672
+      - HOME_SERVICE_URL=http://home-service:3002
+      - NURSE_SERVICE_URL=http://nurse-service:3003
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./services/notification-service
+      dockerfile: Dockerfile
+    container_name: eldercare_notifications
+    ports:
+      - "3008:3008"
+    environment:
+      - NODE_ENV=development
+      - PORT=3008
+      - REDIS_URL=redis://redis:6379
+      - RABBITMQ_URL=amqp://eldercare:eldercare123@rabbitmq:5672
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE=${TWILIO_PHONE}
+      - SMTP_HOST=${SMTP_HOST}
+      - SMTP_PORT=${SMTP_PORT}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASS=${SMTP_PASS}
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Nginx Reverse Proxy ─────────────────────────────────
+  nginx:
+    image: nginx:alpine
+    container_name: eldercare_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./infrastructure/nginx/ssl:/etc/nginx/ssl
+    depends_on:
+      - api-gateway
+    restart: unless-stopped
+
+volumes:
+  postgres_auth_data:
+  postgres_homes_data:
+  postgres_nurses_data:
+  postgres_bookings_data:
+  postgres_alerts_data:
+  redis_data:
+  rabbitmq_data:

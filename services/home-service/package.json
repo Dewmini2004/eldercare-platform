@@ -1,0 +1,31 @@
+{
+  "name": "@eldercare/home-service",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@eldercare/shared-types": "*",
+    "@fastify/cors": "^9.0.1",
+    "@fastify/helmet": "^11.1.1",
+    "@fastify/multipart": "^8.3.0",
+    "amqplib": "^0.10.9",
+    "drizzle-orm": "^0.30.10",
+    "fastify": "^4.29.1",
+    "ioredis": "^5.11.1",
+    "pg": "^8.22.0",
+    "pino-pretty": "^11.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/pg": "^8.20.0",
+    "drizzle-kit": "^0.21.4",
+    "tsx": "^4.23.0",
+    "typescript": "^5.4.0"
+  }
+}

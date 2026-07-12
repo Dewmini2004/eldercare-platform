@@ -1,0 +1,272 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  ElderCare Sri Lanka Design System
+  
+  Palette rationale:
+  - Deep teal (#1B4332) as primary: trustworthy, calm, rooted in nature (Sri Lanka's greenery)
+  - Warm gold (#D4A853): warmth, dignity, Sri Lankan heritage
+  - Soft cream (#F8F4EF): gentle, non-clinical — deliberately NOT hospital white
+  - Alert red (#C0392B): emergencies only
+  
+  Typography:
+  - Playfair Display: display/headings — dignified, warm, readable for older eyes
+  - Inter: body/UI — clean, accessible at any size
+*/
+
+:root {
+  /* ── Core Palette ─────────────────────────────── */
+  --color-primary:         #1B4332;   /* deep teal */
+  --color-primary-light:   #2D6A4F;
+  --color-primary-muted:   #40916C;
+  --color-primary-subtle:  #D8F3DC;
+
+  --color-gold:            #D4A853;
+  --color-gold-light:      #F0C97A;
+  --color-gold-dark:       #A67C35;
+
+  --color-cream:           #F8F4EF;
+  --color-cream-dark:      #EDE8E0;
+
+  --color-surface:         #FFFFFF;
+  --color-surface-muted:   #F5F5F5;
+
+  /* ── Semantic ─────────────────────────────────── */
+  --color-success:         #2D6A4F;
+  --color-warning:         #E67E22;
+  --color-urgent:          #E74C3C;
+  --color-critical:        #C0392B;
+  --color-info:            #2980B9;
+
+  /* ── Alert Severity ───────────────────────────── */
+  --alert-info:            #2980B9;
+  --alert-attention:       #E67E22;
+  --alert-urgent:          #E74C3C;
+  --alert-critical:        #C0392B;
+
+  /* ── Text ─────────────────────────────────────── */
+  --color-text-primary:    #1A1A2E;
+  --color-text-secondary:  #4A4A6A;
+  --color-text-muted:      #8A8A9A;
+  --color-text-inverse:    #F8F4EF;
+
+  /* ── Border & Shadow ──────────────────────────── */
+  --color-border:          #E0D9D0;
+  --color-border-focus:    var(--color-primary-muted);
+
+  --shadow-sm:  0 1px 3px rgba(27, 67, 50, 0.08);
+  --shadow-md:  0 4px 12px rgba(27, 67, 50, 0.12);
+  --shadow-lg:  0 8px 32px rgba(27, 67, 50, 0.16);
+  --shadow-card: 0 2px 8px rgba(27, 67, 50, 0.08), 0 0 0 1px rgba(27, 67, 50, 0.06);
+
+  /* ── Spacing & Radius ─────────────────────────── */
+  --radius-sm:   6px;
+  --radius-md:   12px;
+  --radius-lg:   20px;
+  --radius-full: 9999px;
+
+  /* ── Fonts ────────────────────────────────────── */
+  --font-display: var(--font-playfair), Georgia, serif;
+  --font-sans:    var(--font-inter), system-ui, sans-serif;
+
+  /* Tailwind CSS variable bridge */
+  --background: var(--color-cream);
+  --foreground: var(--color-text-primary);
+}
+
+/* ── Base ─────────────────────────────────────────────────────── */
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    border-color: var(--color-border);
+  }
+
+  body {
+    background-color: var(--color-cream);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--color-primary);
+  }
+
+  h4, h5, h6 {
+    font-family: var(--font-sans);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  a {
+    color: var(--color-primary-muted);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+
+  a:hover {
+    color: var(--color-primary);
+  }
+}
+
+/* ── Components ───────────────────────────────────────────────── */
+
+@layer components {
+  /* Cards */
+  .card {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--color-border);
+  }
+
+  .card-hover {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
+  /* Buttons */
+  .btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-text-inverse);
+    border-radius: var(--radius-sm);
+    padding: 0.625rem 1.25rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: background-color 0.2s, transform 0.1s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-primary:hover {
+    background-color: var(--color-primary-light);
+  }
+
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+
+  .btn-gold {
+    background-color: var(--color-gold);
+    color: #1A1A2E;
+    border-radius: var(--radius-sm);
+    padding: 0.625rem 1.25rem;
+    font-weight: 600;
+    font-size: 0.875rem;
+    transition: background-color 0.2s;
+    border: none;
+    cursor: pointer;
+  }
+
+  .btn-gold:hover {
+    background-color: var(--color-gold-dark);
+  }
+
+  /* Badges */
+  .badge-verified {
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+    border: 1px solid var(--color-primary-muted);
+    border-radius: var(--radius-full);
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  .badge-gold {
+    background: #FEF3CD;
+    color: var(--color-gold-dark);
+    border: 1px solid var(--color-gold);
+    border-radius: var(--radius-full);
+    padding: 0.125rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
+
+  /* Alert severity styles */
+  .alert-info     { border-left: 4px solid var(--alert-info);     background: #EBF5FB; }
+  .alert-attention { border-left: 4px solid var(--alert-attention); background: #FEF9E7; }
+  .alert-urgent   { border-left: 4px solid var(--alert-urgent);   background: #FDEDEC; }
+  .alert-critical {
+    border-left: 4px solid var(--alert-critical);
+    background: #FDEDEC;
+    animation: pulse-border 1.5s ease-in-out infinite;
+  }
+
+  /* AI Match score ring */
+  .match-score-high   { color: var(--color-success); }
+  .match-score-medium { color: var(--color-warning); }
+  .match-score-low    { color: var(--color-urgent);  }
+
+  /* Section wrapper */
+  .section {
+    padding: 4rem 0;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+}
+
+/* ── Utilities ────────────────────────────────────────────────── */
+
+@layer utilities {
+  .text-display {
+    font-family: var(--font-display);
+  }
+
+  .text-primary-color {
+    color: var(--color-primary);
+  }
+
+  .text-gold {
+    color: var(--color-gold);
+  }
+
+  .bg-cream {
+    background-color: var(--color-cream);
+  }
+
+  .bg-primary {
+    background-color: var(--color-primary);
+  }
+}
+
+/* ── Animations ───────────────────────────────────────────────── */
+
+@keyframes pulse-border {
+  0%, 100% { border-left-color: var(--alert-critical); }
+  50%       { border-left-color: #E74C3C; }
+}
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out forwards;
+}
+
+/* ── Scrollbar ────────────────────────────────────────────────── */
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--color-cream-dark); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-muted);
+  border-radius: 3px;
+}
